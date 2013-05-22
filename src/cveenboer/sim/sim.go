@@ -52,9 +52,6 @@ var hamming [size][size]uint8
 // (could make this smaller by mirroring etc, but why bother?)
 func init() {
 
-   fmt.Println("Init lookup")
-   //	fmt.Println(hamming)
-
    for i := 0; i < size; i++ {
       for j := 0; j < size; j++ {
 
@@ -68,8 +65,6 @@ func init() {
          distance_table[i][count] = append(distance_table[i][count], uint8(j))
       }
    }
-
-   fmt.Println("Init distance table")
 
    for i := 0; i < size; i++ {
       for j := 0; j < size; j++ {
