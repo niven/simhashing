@@ -4,6 +4,7 @@
 package sim
 
 import "fmt"
+import "container/heap"
 
 import "cveenboer/hash"
 
@@ -194,13 +195,13 @@ func (s *SimStore) Stats() (keys, nodes int) {
 }
 
 // returns true if target is present in the store
-func (s *SimStore) Contains( text string ) bool {
+func (s *SimStore) Contains( text string ) (present bool, index int64) {
     return s.contains( hash.SimHash( text ) )
 }
 
 
 // returns true if target is present in the store
-func (s *SimStore) contains(target uint64) bool {
+func (s *SimStore) contains(target uint64) (present bool, index int64) {
 
    if len(s.nodes) > 0 {
       b := uint8((level_chunks[s.level] & target) >> (s.level * bits_per_key)) // this gets you the Nth byte
@@ -208,18 +209,18 @@ func (s *SimStore) contains(target uint64) bool {
       if exists {
          return subtree.contains(target)
       } else {
-         return false
+         return false, -1
       }
    } else {
       // check every key
       for _, item := range s.values {
          if item.key == target {
-            return true
+            return true, item.id
          }
       }
    }
 
-   return false
+   return false, -1
 }
 
 // returns all the hashes with a Hamming Distance of distance or less
@@ -311,6 +312,142 @@ func (s *SimStore) find(target uint64, distance uint8) (found []int64, keys_chec
 
    return
 }
+
+// Find the closest thing matching the input
+func (s *SimStore) FindClosest( text string ) int64 {
+	
+	target := hash.SimHash(text)
+	
+	fmt.Printf("FC 0b%064b\n", target)
+	
+	// we're just going to use the target and then flip every bit in turn
+	// and call contains() a lot (which is reasonably efficient)
+	// in this 'tried' map we keep track of things we already tried
+	// if we have very few items in the store, we'll end up wasting huge amounts
+	// of time calling contains() for things that won't be found.
+	// Yeah, so after trying that I quickly realized we're wasting huge amounts of space
+	// storing all the keys we're trying, and also generating lots of dupe keys
+	// That is a truly awful method.
+	
+	// So instead, I'll start by searching any nodes that have HD0 for the byte of our level
+	// This is basically the same as contains(), but we'll try increasing byte distances  
+	// What happens if we get something like (8 bite example, 2 bit splits)
+	// target: 00 00 00 11
+	// searching depth first: 00 00 00 00, hey, distance 2, pretty close
+	// however 10 00 00 11 was distance 1 but we never checked
+	// but if we search breadth-first we end up searching everything :(
+	// Maybe using a stack with (distance_so_far, subtree) sorted by least dist
+	// and then expanding that?
+	// A traditional approach to searching if you will :)
+	// instead of sorting we should of course use a heap
+	
+	// ok, so let's start by checking keys if we have it (just return the one with the smallest distance?)
+	// but what if other search directions find better matches? We need to also check all the frontiers
+	// with HD < HD_of_first_key_found to see if we can do better.
+	
+	// first of all, do we even have nodes, bro?
+	if len(s.nodes) == 0 {
+		_, closest := find_closest_in_keys( &s.values, target )
+		return closest
+	}
+	
+	// the hard case is much much harder than the simple one unfortunately
+	sh := &SearchHeap{}
+	heap.Init( sh )
+	
+	// first, stick all our nodes in
+    
+	b := uint8((level_chunks[s.level] & target) >> (s.level * bits_per_key)) // this gets you the Nth byte
+	for prefix, subtree := range s.nodes {
+
+		item := &Distance{
+					hamming_distance:    hamming[b][prefix],
+					subtree: subtree,
+				}
+		heap.Push(sh, item)
+	}
+	
+	// then expand the shortest distance until we hit a key
+	var first_key uint64
+	var closest  int64
+	for sh.Len() > 0 {
+		
+		shortest := heap.Pop(sh).(*Distance)
+		fmt.Printf("Expanding distance %03d\n", shortest.hamming_distance)
+		if len(shortest.subtree.nodes) == 0 {
+			first_key, closest = find_closest_in_keys( &shortest.subtree.values, target )
+			break
+		}
+		// add expanded subtrees to heap
+	}
+	
+	fmt.Printf("First key: 0b%064b (id %v)\n", first_key, closest)
+	
+	// expand remaining nodes that have a distance < that of the first key, they might have better results
+	// while the rest can't have
+	
+	panic("SimStore is empty, since we tried every possible key but didn't find a single one present.")
+}
+
+func find_closest_in_keys( v *[]entry, target uint64 ) (key uint64, closest int64) {
+	// just check all the keys.
+	distance := uint8(255) // any real one will be less
+	for _, item := range *v {
+		dist := hamming_distance( item.key, target )
+		if dist < distance {
+			distance = dist
+			closest = item.id
+			key = item.key
+		}
+	}
+	return
+}
+
+// Here is our heap of HDs and SimStore nodes
+// These names are awful
+type Distance struct {
+	hamming_distance uint8 // this is always 0-256
+	subtree *SimStore // the node we're referring to
+	
+	// below is copied from the docs, kind ugly stuff
+	// The index is needed by update and is maintained by the heap.Interface methods.
+	index int // The index of the item in the heap.
+}
+
+// this is the thing that implements the heap
+// (copied from the example, no clue how the Push/Pop work)
+type SearchHeap []*Distance
+
+func (sh SearchHeap) Len() int { return len(sh) }
+
+func (sh SearchHeap) Less(i, j int) bool {
+	// We want Pop to give us the lowest hamming_distance
+	return sh[i].hamming_distance < sh[j].hamming_distance
+}
+
+func (sh SearchHeap) Swap(i, j int) {
+	sh[i], sh[j] = sh[j], sh[i]
+	sh[i].index = i
+	sh[j].index = j
+}
+
+func (sh *SearchHeap) Push(x interface{}) {
+	n := len(*sh)
+	item := x.(*Distance)
+	item.index = n
+	*sh = append(*sh, item)
+}
+
+func (sh *SearchHeap) Pop() interface{} {
+	old := *sh
+	n := len(old)
+	item := old[n-1]
+	item.index = -1 // for safety
+	*sh = old[0 : n-1]
+	return item
+}
+
+// end of heap stuff
 
 // so math.Min want float64s... and the casting is ugly
 func min(a uint8, b uint8) uint8 {
