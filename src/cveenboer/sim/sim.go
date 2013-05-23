@@ -431,8 +431,13 @@ func (s *SimStore) FindClosest(text string) int64 {
 		b := uint8((level_chunks[shortest.subtree.level] & target) >> (shortest.subtree.level * bits_per_key)) // this gets you the Nth byte
 		//		fmt.Printf("Expanding distance %d \n", shortest.hamming_distance )
 		for prefix, subtree := range shortest.subtree.nodes {
+			new_distance := shortest.hamming_distance + hamming[b][prefix]
+			// no point in adding nodes that never could lead to an improvement
+			if new_distance >= upper_bound {
+				continue
+			}
 			item := &Distance{
-				hamming_distance: shortest.hamming_distance + hamming[b][prefix], // here we add the distance, since we're going down a level
+				hamming_distance: new_distance, // here we add the distance, since we're going down a level
 				subtree:          subtree,
 			}
 			heap.Push(sh, item)
