@@ -80,3 +80,16 @@ func TestTiming(t *testing.T) {
 
 	
 }
+
+
+
+func BenchmarkInsert(b *testing.B) {
+	
+	simstore := NewSimStore()
+	r := rand.New(rand.NewSource(45342))
+	
+    for i := 0; i < b.N; i++ {
+		simstore.Insert(fmt.Sprintf("%016x", r.Int63()), int64(i))
+
+    }
+}
