@@ -3,6 +3,7 @@ package sim
 import "testing"
 import "fmt"
 import "math/rand"
+import "time"
 
 func TestFindClosestKeys(t *testing.T) {
 
@@ -53,4 +54,26 @@ func TestFindClosestNodes(t *testing.T) {
 	if found != -1 {
 		t.Error("FindClosest didn't find the perfect match")
 	}
+}
+
+// not really testing anytihng, just looking at timing stuff
+func TestTiming(t *testing.T) {
+	
+	simstore := NewSimStore()
+
+	// insert stuff
+	N := 20 * 1000 * 1000
+	r := rand.New(rand.NewSource(45342))
+	for i := 0; i < N; i++ {
+		simstore.Insert(fmt.Sprintf("%016x", r.Int63()), int64(i))
+	}
+	
+	for i := 0; i<20; i++ {
+		t0 := time.Now()
+		simstore.FindClosest( fmt.Sprintf("%016x", r.Int63()) )
+		t1 := time.Now()
+		fmt.Printf("FindClosest in store with %d items took %v.\n", N, t1.Sub(t0))		
+	}
+
+	
 }
