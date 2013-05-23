@@ -1,0 +1,9 @@
+Inserting 20M items still takes around 140 seconds, that can be improved I guess
+
+Various things could be faster, need to profile
+
+Adding a top level index with number_of_bits_set_in_key would improve searching I think
+
+Adding arbitrary metadata would be nice (now it's just ints)
+
+Persistent store/load would be nice for Real World(tm) application
