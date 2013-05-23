@@ -42,9 +42,15 @@ func TestFindClosestNodes(t *testing.T) {
 	// insert the thing we hope to find
 	simstore.Insert( "It was the best of times, it was the worst of times,", -1 )
 	
+	// exact match
 	found := simstore.FindClosest("It was the best of times, it was the worst of times,")
 	if found != -1 {
 		t.Error("FindClosest didn't find the perfect match")
 	}
 	
+	// close match
+	found = simstore.FindClosest("It was the best of times, it was peanut butter jelly time")
+	if found != -1 {
+		t.Error("FindClosest didn't find the perfect match")
+	}
 }
