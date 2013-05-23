@@ -114,7 +114,7 @@ func NewSimStore() *SimStore {
 
 // Inserts a new value in the store
 func (s *SimStore) Insert(text string, id int64) {
-	s.insert(entry{key: hash.SimHash(text), id: id})
+	s.insert( entry{key: hash.SimHash(text), id: id} )
 }
 
 // inserts a new value in the store, doesn't rehash etc
