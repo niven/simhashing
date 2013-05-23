@@ -98,7 +98,7 @@ func hamming_distance(a uint64, b uint64) (distance uint8) {
 
 type SimStore struct {
 	values []entry
-	nodes  map[uint8]*SimStore // all subtrees based on the first bits_per_key LSB
+	nodes  map[uint8]*SimStore // all subtrees based on the first bits_per_key LSB (maybe mae this an array, maybe faster?)
 	level  uint8               // determines which bitrange we pick to split keys into nodes
 }
 
