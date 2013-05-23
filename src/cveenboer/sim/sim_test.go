@@ -35,7 +35,7 @@ func TestFindClosestNodes(t *testing.T) {
 
 	// insert 100K nonsense
 	r := rand.New(rand.NewSource(1234))
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 20 * 1000 * 1000; i++ {
 		simstore.Insert(fmt.Sprintf("%016x", r.Int63()), int64(i))
 	}
 

@@ -369,11 +369,13 @@ func (s *SimStore) FindClosest(text string) int64 {
 	// then expand the shortest distance until we hit a key
 	var best_key uint64
 	var closest int64
+	paths_tried := 0
 	// TODO: the above might be better off as an entry type
 
 	for sh.Len() > 0 {
 
 		shortest := heap.Pop(sh).(*Distance)
+		paths_tried++
 		fmt.Printf("Checking distance %03d (level: %v)\n", shortest.hamming_distance, shortest.subtree.level)
 		if len(shortest.subtree.nodes) == 0 {
 			fmt.Printf("This node has keys\n")
@@ -406,6 +408,8 @@ func (s *SimStore) FindClosest(text string) int64 {
 	fmt.Printf("Checking remaining nodes, upper bound is %d\n", upper_bound)
 	for sh.Len() > 0 {
 		shortest := heap.Pop(sh).(*Distance)
+		paths_tried++
+
 		// we're done if no items remain with a total HD of less than/equal the key we have
 		if upper_bound <= shortest.hamming_distance {
 			fmt.Printf("Every possible other path will result in larger distance, bailing out (%d paths left)\n", sh.Len())
@@ -435,6 +439,8 @@ func (s *SimStore) FindClosest(text string) int64 {
 		}
 
 	}
+
+	fmt.Printf("Checked %d paths\n", paths_tried)
 
 	// so if we have any IDs with value 0, we're returning bad things
 	return closest
