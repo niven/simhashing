@@ -62,10 +62,13 @@ func TestTiming(t *testing.T) {
 	simstore := NewSimStore()
 
 	// insert stuff
-	N := 20 * 1000 * 1000
+	N := 2 * 1000 // * 1000 //* 10
 	r := rand.New(rand.NewSource(45342))
 	for i := 0; i < N; i++ {
 		simstore.Insert(fmt.Sprintf("%016x", r.Int63()), int64(i))
+		if i % 1000*1000 == 0 {
+			fmt.Printf("Inserted %.6f%%\n", 100*float64(i)/float64(N) )
+		}
 	}
 	
 	for i := 0; i<20; i++ {
