@@ -368,25 +368,77 @@ func (s *SimStore) FindClosest( text string ) int64 {
 	}
 	
 	// then expand the shortest distance until we hit a key
-	var first_key uint64
+	var best_key uint64
 	var closest  int64
+	// TODO: the above might be better off as an entry type
+	
 	for sh.Len() > 0 {
 		
 		shortest := heap.Pop(sh).(*Distance)
-		fmt.Printf("Expanding distance %03d\n", shortest.hamming_distance)
+		fmt.Printf("Checking distance %03d (level: %v)\n", shortest.hamming_distance, shortest.subtree.level)
 		if len(shortest.subtree.nodes) == 0 {
-			first_key, closest = find_closest_in_keys( &shortest.subtree.values, target )
+			fmt.Printf("This node has keys\n")
+			best_key, closest = find_closest_in_keys( &shortest.subtree.values, target )
 			break
 		}
 		// add expanded subtrees to heap
+		b := uint8((level_chunks[shortest.subtree.level] & target) >> (shortest.subtree.level * bits_per_key)) // this gets you the Nth byte
+		for prefix, subtree := range shortest.subtree.nodes {
+//			fmt.Printf("Expanding distance %d with %d\n", shortest.hamming_distance, hamming[b][prefix])
+			item := &Distance{
+						hamming_distance:    shortest.hamming_distance + hamming[b][prefix], // here we add the distance, since we're going down a level
+						subtree: subtree,
+					}
+			heap.Push(sh, item)			
+		}
 	}
 	
-	fmt.Printf("First key: 0b%064b (id %v)\n", first_key, closest)
+	fmt.Printf("First key (upper bound): 0b%064b (id %v)\n", best_key, closest)
 	
 	// expand remaining nodes that have a distance < that of the first key, they might have better results
 	// while the rest can't have
+	upper_bound := hamming_distance( target, best_key )
 	
-	panic("SimStore is empty, since we tried every possible key but didn't find a single one present.")
+	// if we found an exact match, we can skip everything else and just return that
+	if upper_bound == 0 {
+		return closest
+	}
+	
+	fmt.Printf("Checking remaining nodes, upper bound is %d\n", upper_bound)
+	for sh.Len() > 0 {
+		shortest := heap.Pop(sh).(*Distance)
+		// we're done if no items remain with a total HD of less than/equal the key we have
+		if upper_bound <= shortest.hamming_distance {
+			fmt.Printf("Every possible other path will result in larger distance, bailing out (%d paths left)\n", sh.Len() )
+			break
+		}
+		// now expand this one, until we find keys
+		if len(shortest.subtree.nodes) == 0 {
+			possible_closer_key, possible_closer_id := find_closest_in_keys( &shortest.subtree.values, target )
+			possible_distance := hamming_distance( target, possible_closer_key )
+			// woot, improvement
+			if possible_distance < upper_bound {
+				fmt.Printf("Got an improvement from %d to %d\n", upper_bound, possible_distance )
+				upper_bound = possible_distance
+				best_key = possible_closer_key
+				closest = possible_closer_id
+			}
+		}
+		// just expand nodes (if we have any)
+		b := uint8((level_chunks[shortest.subtree.level] & target) >> (shortest.subtree.level * bits_per_key)) // this gets you the Nth byte
+//		fmt.Printf("Expanding distance %d \n", shortest.hamming_distance )
+		for prefix, subtree := range shortest.subtree.nodes {
+			item := &Distance{
+						hamming_distance:    shortest.hamming_distance + hamming[b][prefix], // here we add the distance, since we're going down a level
+						subtree: subtree,
+					}
+			heap.Push(sh, item)			
+		}
+		
+	}
+	
+	// so if we have any IDs with value 0, we're returning bad things
+	return closest
 }
 
 func find_closest_in_keys( v *[]entry, target uint64 ) (key uint64, closest int64) {
