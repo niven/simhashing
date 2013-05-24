@@ -7,3 +7,6 @@ Adding a top level index with number_of_bits_set_in_key would improve searching 
 Adding arbitrary metadata would be nice (now it's just ints)
 
 Persistent store/load would be nice for Real World(tm) application
+
+How about maintaining a bunch of pointers to all the keys, so we can sample Closest and return one
+that is probably close to optimal?

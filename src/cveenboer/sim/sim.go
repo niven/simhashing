@@ -139,6 +139,8 @@ func (s *SimStore) insert(item entry) {
 
 }
 
+
+
 // go ever every key and put it in a node based on the value of its Nth byte
 func (s *SimStore) split() {
 
