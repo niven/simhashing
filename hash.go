@@ -1,6 +1,5 @@
 package simhashing
 
-
 // Generate a 64 bit simhash for a string
 func SimHash(src string) uint64 {
 

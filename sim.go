@@ -112,7 +112,7 @@ func NewSimStore() *SimStore {
 
 // Inserts a new value in the store
 func (s *SimStore) Insert(text string, id int64) {
-	s.insert( entry{key: SimHash(text), id: id} )
+	s.insert(entry{key: SimHash(text), id: id})
 }
 
 // inserts a new value in the store, doesn't rehash etc
@@ -136,8 +136,6 @@ func (s *SimStore) insert(item entry) {
 	}
 
 }
-
-
 
 // go ever every key and put it in a node based on the value of its Nth byte
 func (s *SimStore) split() {

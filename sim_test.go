@@ -36,7 +36,7 @@ func TestFindClosestNodes(t *testing.T) {
 
 	// insert 100K nonsense
 	r := rand.New(rand.NewSource(1234))
-	for i := 0; i < 20 * 1000; i++ {
+	for i := 0; i < 20*1000; i++ {
 		simstore.Insert(fmt.Sprintf("%016x", r.Int63()), int64(i))
 	}
 
@@ -58,7 +58,7 @@ func TestFindClosestNodes(t *testing.T) {
 
 // not really testing anytihng, just looking at timing stuff
 func TestTiming(t *testing.T) {
-	
+
 	simstore := NewSimStore()
 
 	// insert stuff
@@ -66,30 +66,27 @@ func TestTiming(t *testing.T) {
 	r := rand.New(rand.NewSource(45342))
 	for i := 0; i < N; i++ {
 		simstore.Insert(fmt.Sprintf("%016x", r.Int63()), int64(i))
-		if i % 1000*1000 == 0 {
-			fmt.Printf("Inserted %.6f%%\n", 100*float64(i)/float64(N) )
+		if i%1000*1000 == 0 {
+			fmt.Printf("Inserted %.6f%%\n", 100*float64(i)/float64(N))
 		}
 	}
-	
-	for i := 0; i<20; i++ {
+
+	for i := 0; i < 20; i++ {
 		t0 := time.Now()
-		simstore.FindClosest( fmt.Sprintf("%016x", r.Int63()) )
+		simstore.FindClosest(fmt.Sprintf("%016x", r.Int63()))
 		t1 := time.Now()
-		fmt.Printf("FindClosest in store with %d items took %v.\n", N, t1.Sub(t0))		
+		fmt.Printf("FindClosest in store with %d items took %v.\n", N, t1.Sub(t0))
 	}
 
-	
 }
 
-
-
 func BenchmarkInsert(b *testing.B) {
-	
+
 	simstore := NewSimStore()
 	r := rand.New(rand.NewSource(45342))
-	
-    for i := 0; i < b.N; i++ {
+
+	for i := 0; i < b.N; i++ {
 		simstore.Insert(fmt.Sprintf("%016x", r.Int63()), int64(i))
 
-    }
+	}
 }
