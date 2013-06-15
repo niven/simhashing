@@ -1,4 +1,4 @@
-package sim
+package simhashing
 
 import "testing"
 import "fmt"

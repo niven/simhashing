@@ -1,4 +1,4 @@
-package util
+package simhashing
 
 // Returns the number of bits set in x
 func BitsSet(x uint64) (count int) {

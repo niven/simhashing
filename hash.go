@@ -1,12 +1,11 @@
-package hash
+package simhashing
 
-import "cveenboer/util"
 
 // Generate a 64 bit simhash for a string
 func SimHash(src string) uint64 {
 
 	// Magic number 3, as well as a tokenize function
-	tokens := util.Tokenize_stride(src, 3)
+	tokens := Tokenize_stride(src, 3)
 
 	var counts [64]int
 

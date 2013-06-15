@@ -1,12 +1,10 @@
 // This implements a datastore for simhashes (http://matpalm.com/resemblance/simhash/)
 // that allows for (at one point) efficient searching of items within some Hamming Distance of a know text
 // Currently we do reasonable as long as we have stored many items (~20M) and we search within a range of 8 or so.
-package sim
+package simhashing
 
 import "fmt"
 import "container/heap"
-
-import "cveenboer/hash"
 
 const bit_length = 8
 const size = 1 << bit_length
@@ -114,7 +112,7 @@ func NewSimStore() *SimStore {
 
 // Inserts a new value in the store
 func (s *SimStore) Insert(text string, id int64) {
-	s.insert( entry{key: hash.SimHash(text), id: id} )
+	s.insert( entry{key: SimHash(text), id: id} )
 }
 
 // inserts a new value in the store, doesn't rehash etc
@@ -198,7 +196,7 @@ func (s *SimStore) Stats() (keys, nodes int) {
 
 // returns true if target is present in the store
 func (s *SimStore) Contains(text string) (present bool, index int64) {
-	return s.contains(hash.SimHash(text))
+	return s.contains(SimHash(text))
 }
 
 // returns true if target is present in the store
@@ -251,7 +249,7 @@ func (s *SimStore) FindScanAll(target uint64, distance uint8) (found []uint64) {
 // returns the matches found as well as the number of keys and nodes checked
 func (s *SimStore) Find(text string, distance uint8) (found []int64, keys_checked int, nodes_checked int) {
 
-	return s.find(hash.SimHash(text), distance)
+	return s.find(SimHash(text), distance)
 }
 
 // returns all the hashes with a Hamming Distance of distance or less
@@ -317,7 +315,7 @@ func (s *SimStore) find(target uint64, distance uint8) (found []int64, keys_chec
 // Find the closest thing matching the input
 func (s *SimStore) FindClosest(text string) int64 {
 
-	target := hash.SimHash(text)
+	target := SimHash(text)
 
 	fmt.Printf("FC 0b%064b\n", target)
 
