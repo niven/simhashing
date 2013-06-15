@@ -7,6 +7,12 @@ Adding a top level index with number_of_bits_set_in_key would improve searching 
 Adding arbitrary metadata would be nice (now it's just ints)
 
 Persistent store/load would be nice for Real World(tm) application
+	- having an export/import for a simstore would be better, then we don't have to care about how to persist here
 
-How about maintaining a bunch of pointers to all the keys, so we can sample Closest and return one
-that is probably close to optimal?
+FindClosest might be useless atm if that key has been added already (ie, it would just return "yes, I'm the closest to myself")
+
+Lots of recursive stuff might benefit from goroutines
+
+The bit_length "constant" defines a bunch of things but setting it to not-multiples-of-8 and/or not 8 will break many other things that depend on it being 8. It should be considered more of a "readability constant" I guess
+
+When creating a new SimStore I think you should be able to specify what kind of hashing function to use somehow
